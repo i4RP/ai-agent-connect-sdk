@@ -138,6 +138,155 @@ app = client.register_app(
 print(f"Registered: {app.app_id}")
 ```
 
+## Integration Examples
+
+This SDK can connect AI agents to **any service with a REST API**. Below are concrete examples for common use cases.
+
+### Soccer Game Integration
+
+Connect AI agents to a multiplayer soccer game server:
+
+```python
+from ai_agent_sdk import AgentConnectClient, CustomProvider, AppCapability
+
+provider = CustomProvider(
+    provider_name="soccer-game",
+    provider_base_url="https://api.soccer-game.com/v1",
+    agent_profile_path="/players/me",
+)
+
+client = AgentConnectClient(api_key="game-api-key", provider=provider)
+
+# Register the game's capabilities for AI agents
+client.register_app(
+    name="SoccerGameBot",
+    description="AI agents can join and play soccer matches via API",
+    base_url="https://api.soccer-game.com/v1",
+    capabilities=[
+        AppCapability(
+            name="join_match",
+            description="Join an active soccer match",
+            endpoint="/matches/join",
+            method="POST",
+        ),
+        AppCapability(
+            name="kick_ball",
+            description="Kick the ball with direction and power",
+            endpoint="/actions/kick",
+            method="POST",
+            parameters={"direction": "float", "power": "float"},
+        ),
+        AppCapability(
+            name="move_player",
+            description="Move the player to a position",
+            endpoint="/actions/move",
+            method="POST",
+            parameters={"x": "float", "y": "float"},
+        ),
+        AppCapability(
+            name="get_score",
+            description="Get the current match score",
+            endpoint="/matches/score",
+            method="GET",
+        ),
+    ],
+)
+
+# AI agent performs in-game actions
+client.request("POST", "/matches/join", json={"match_id": "match-123"})
+client.request("POST", "/actions/kick", json={"direction": 45.0, "power": 0.8})
+score = client.request("GET", "/matches/score")
+print(f"Score: {score}")
+
+client.close()
+```
+
+### DEX (Decentralized Exchange) Integration
+
+Connect AI agents to a DEX for automated token trading:
+
+```python
+from ai_agent_sdk import AgentConnectClient, CustomProvider, AppCapability, AuthStrategy
+
+provider = CustomProvider(
+    provider_name="dex-platform",
+    provider_base_url="https://api.my-dex.com/v1",
+    auth_strategy=AuthStrategy.HEADER,
+    auth_header="X-API-Key",
+)
+
+client = AgentConnectClient(api_key="dex-api-key", provider=provider)
+
+# Register DEX capabilities for AI agents
+client.register_app(
+    name="DEX Trading Bot",
+    description="AI agents can trade tokens on the DEX",
+    base_url="https://api.my-dex.com/v1",
+    capabilities=[
+        AppCapability(
+            name="get_price",
+            description="Get token pair price",
+            endpoint="/tokens/price",
+            method="GET",
+            parameters={"pair": "string"},
+        ),
+        AppCapability(
+            name="swap",
+            description="Swap tokens",
+            endpoint="/swap",
+            method="POST",
+            parameters={
+                "from_token": "string",
+                "to_token": "string",
+                "amount": "float",
+            },
+            required_scopes=["trade"],
+        ),
+        AppCapability(
+            name="get_liquidity",
+            description="Get liquidity pool info",
+            endpoint="/pools",
+            method="GET",
+        ),
+        AppCapability(
+            name="get_balance",
+            description="Get wallet balance",
+            endpoint="/wallet/balance",
+            method="GET",
+        ),
+    ],
+)
+
+# AI agent operates on the DEX
+price = client.request("GET", "/tokens/price", params={"pair": "ETH/USDC"})
+print(f"ETH/USDC price: {price}")
+
+balance = client.request("GET", "/wallet/balance")
+print(f"Wallet balance: {balance}")
+
+swap_result = client.request("POST", "/swap", json={
+    "from_token": "ETH",
+    "to_token": "USDC",
+    "amount": 1.5,
+})
+print(f"Swap result: {swap_result}")
+
+client.close()
+```
+
+### Other Use Cases
+
+The SDK works with **any REST API**. Some additional examples:
+
+| Use Case | Description |
+|----------|-------------|
+| **SNS / Social** | AI agents posting, commenting, and interacting on social platforms |
+| **E-commerce** | AI agents browsing products, placing orders, managing inventory |
+| **IoT / Robotics** | AI agents controlling sensors, devices, and robots via API |
+| **Data Analytics** | AI agents querying dashboards, generating reports |
+| **Customer Support** | AI agents handling tickets, responding to inquiries |
+| **NFT Marketplace** | AI agents minting, listing, and trading NFTs |
+
 ## Async Support
 
 ```python
