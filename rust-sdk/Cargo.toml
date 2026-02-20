@@ -1,0 +1,23 @@
+[package]
+name = "ai-agent-connect"
+version = "0.1.0"
+edition = "2021"
+description = "A general-purpose SDK for API connections to distribute and connect apps with AI agents"
+license = "MIT"
+repository = "https://github.com/i4RP/ai-agent-connect-sdk"
+keywords = ["ai-agents", "sdk", "api", "app-distribution"]
+categories = ["api-bindings", "web-programming::http-client"]
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+thiserror = "2"
+chrono = { version = "0.4", features = ["serde"] }
+url = "2"
+tracing = "0.1"
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }

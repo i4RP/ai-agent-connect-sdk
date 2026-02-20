@@ -442,7 +442,140 @@ class MyProvider(BaseProvider):
     # ... implement remaining abstract methods
 ```
 
+## Rust SDK
+
+A Rust implementation is available under `rust-sdk/`. It provides the same architecture as the Python SDK with Rust's type safety and performance.
+
+### Quick Start (Rust)
+
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+ai-agent-connect = { path = "rust-sdk" }
+tokio = { version = "1", features = ["full"] }
+```
+
+#### Moltbook
+
+```rust
+use ai_agent_connect::AgentConnectClient;
+
+#[tokio::main]
+async fn main() -> ai_agent_connect::Result<()> {
+    let client = AgentConnectClient::with_moltbook("moltbook_xxx")?;
+
+    let profile = client.get_agent_profile().await?;
+    println!("Agent: {} (karma: {})", profile.name, profile.karma);
+
+    let token = client.generate_identity_token(None).await?;
+    println!("Token: {}", &token.token[..20]);
+
+    let result = client.verify_identity(&token.token).await?;
+    if result.valid {
+        println!("Verified!");
+    }
+
+    Ok(())
+}
+```
+
+#### Custom Provider
+
+```rust
+use ai_agent_connect::{AgentConnectClient, CustomProvider, AuthStrategy, SDKConfig};
+use std::sync::Arc;
+
+#[tokio::main]
+async fn main() -> ai_agent_connect::Result<()> {
+    let provider = CustomProvider::new("my-platform", "https://api.my-platform.com/v2")
+        .with_auth_strategy(AuthStrategy::Header)
+        .with_auth_header("X-API-Key")
+        .with_identity_token_path("/auth/token")
+        .with_verify_identity_path("/auth/verify");
+
+    let config = SDKConfig::new().with_api_key("my-key");
+    let client = AgentConnectClient::new(config, Arc::new(provider))?;
+
+    let profile = client.get_agent_profile().await?;
+    println!("Agent: {}", profile.name);
+
+    Ok(())
+}
+```
+
+#### Soccer Game (Rust)
+
+```rust
+use ai_agent_connect::{AgentConnectClient, CustomProvider, SDKConfig};
+use std::sync::Arc;
+
+#[tokio::main]
+async fn main() -> ai_agent_connect::Result<()> {
+    let provider = CustomProvider::new("soccer-game", "https://api.soccer-game.com/v1")
+        .with_agent_profile_path("/players/me");
+
+    let config = SDKConfig::new().with_api_key("game-api-key");
+    let client = AgentConnectClient::new(config, Arc::new(provider))?;
+
+    let join = serde_json::json!({"match_id": "match-123"});
+    client.request("POST", "/matches/join", Some(&join), None).await?;
+
+    let kick = serde_json::json!({"direction": 45.0, "power": 0.8});
+    client.request("POST", "/actions/kick", Some(&kick), None).await?;
+
+    let score = client.request("GET", "/matches/score", None, None).await?;
+    println!("Score: {}", score);
+
+    Ok(())
+}
+```
+
+#### DEX (Rust)
+
+```rust
+use ai_agent_connect::{AgentConnectClient, CustomProvider, AuthStrategy, SDKConfig};
+use std::sync::Arc;
+use std::collections::HashMap;
+
+#[tokio::main]
+async fn main() -> ai_agent_connect::Result<()> {
+    let provider = CustomProvider::new("dex-platform", "https://api.my-dex.com/v1")
+        .with_auth_strategy(AuthStrategy::Header)
+        .with_auth_header("X-API-Key");
+
+    let config = SDKConfig::new().with_api_key("dex-api-key");
+    let client = AgentConnectClient::new(config, Arc::new(provider))?;
+
+    let mut params = HashMap::new();
+    params.insert("pair".to_string(), "ETH/USDC".to_string());
+    let price = client.request("GET", "/tokens/price", None, Some(&params)).await?;
+    println!("ETH/USDC: {}", price);
+
+    let swap = serde_json::json!({
+        "from_token": "ETH",
+        "to_token": "USDC",
+        "amount": 1.5
+    });
+    let result = client.request("POST", "/swap", Some(&swap), None).await?;
+    println!("Swap: {}", result);
+
+    Ok(())
+}
+```
+
+### Rust SDK Features
+
+- **reqwest + rustls** - No OpenSSL dependency, pure Rust TLS
+- **tokio async runtime** - Full async/await support
+- **serde** - Automatic JSON serialization/deserialization
+- **Provider trait** - Implement custom providers with Rust traits
+- **Middleware** - Retry with exponential backoff, client-side rate limiting, logging via `tracing`
+- **Type safety** - Strong typing with Rust enums and structs, thiserror for error handling
+
 ## Development
+
+### Python SDK
 
 ```bash
 git clone https://github.com/i4RP/ai-agent-connect-sdk.git
@@ -457,6 +590,21 @@ ruff check src/ tests/
 
 # Type check
 mypy src/
+```
+
+### Rust SDK
+
+```bash
+cd rust-sdk
+
+# Build
+cargo build
+
+# Run tests
+cargo test
+
+# Lint
+cargo clippy
 ```
 
 ## License
